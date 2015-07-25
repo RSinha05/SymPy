@@ -10,6 +10,7 @@ from sympy.core.symbol import Symbol
 from sympy.printing.str import StrPrinter
 from sympy.printing.precedence import precedence
 from sympy.core.sympify import _sympify, sympify
+from sympy.utilities.exceptions import SymPyDeprecationWarning
 
 
 class AssignmentError(Exception):
@@ -165,20 +166,32 @@ class CodePrinter(StrPrinter):
         return result
 
     def _doprint_loops(self, expr, assign_to=None):
+        from sympy.tensor import EinsteinSum
         # Here we print an expression that contains Indexed objects, they
-        # correspond to arrays in the generated code.  The low-level implementation
-        # involves looping over array elements and possibly storing results in temporary
-        # variables or accumulate it in the assign_to object.
+        # correspond to arrays in the generated code.  The low-level
+        # implementation involves looping over array elements and possibly
+        # storing results in temporary variables or accumulate it in the
+        # assign_to object.
 
-        if self._settings.get('contract', True):
-            from sympy.tensor import get_contraction_structure
-            # Setup loops over non-dummy indices  --  all terms need these
+        contract = self._settings.get('contract', 'auto')
+        loops = self._settings.get('loops', True)
+
+        if contract != 'auto':
+            if contract:
+                expr = EinsteinSum(expr)
+            else:
+                loops = False
+
+        if loops:
+            # Set up loops over non-dummy indices -- all terms need these
             indices = self._get_expression_indices(expr, assign_to)
-            # Setup loops over dummy indices  --  each term needs separate treatment
-            dummies = get_contraction_structure(expr)
+            # Set up loops over dummy indices -- each term needs separate
+            # treatment
+            dummies = self._get_contraction_structure(expr)
         else:
             indices = []
             dummies = {None: (expr,)}
+
         openloop, closeloop = self._get_loop_opening_ending(indices)
 
         # terms with no summations first
@@ -245,20 +258,36 @@ class CodePrinter(StrPrinter):
 
     def _get_expression_indices(self, expr, assign_to):
         from sympy.tensor import get_indices
-        rinds, junk = get_indices(expr)
-        linds, junk = get_indices(assign_to)
+        rinds = get_indices(expr)
+        linds = get_indices(assign_to)
 
         # support broadcast of scalar
         if linds and not rinds:
             rinds = linds
         if rinds != linds:
-            raise ValueError("lhs indices must match non-dummy"
-                    " rhs indices in %s" % expr)
+            raise ValueError("lhs indices, %s, must match non-dummy rhs "
+                             "indices, %s, in %s == %s" % (
+                                 linds, rinds, assign_to, expr))
 
         return self._sort_optimized(rinds, assign_to)
 
-    def _sort_optimized(self, indices, expr):
+    def _get_contraction_structure(self, expr):
+        from sympy.tensor import EinsteinSum
+        from collections import defaultdict
 
+        if isinstance(expr, EinsteinSum):
+            structure = expr.index_structure
+            dummies = defaultdict(list)
+
+            for monomial, inner in zip(structure['monomial_list'],
+                                       structure['inner_list']):
+                key = tuple(inner) if inner else None
+                dummies[key].append(monomial)
+            return dummies
+        else:
+            return {None: (expr,)}
+
+    def _sort_optimized(self, indices, expr):
         from sympy.tensor.indexed import Indexed
 
         if not indices:
@@ -321,6 +350,16 @@ class CodePrinter(StrPrinter):
         from sympy.functions.elementary.piecewise import Piecewise
         from sympy.matrices.expressions.matexpr import MatrixSymbol
         from sympy.tensor.indexed import IndexedBase
+
+        if self._settings["contract"] != 'auto':
+            msg = ("Instead set `contract='auto'` (the default) and wrap "
+                   "expressions where implicit summation is desired in "
+                   "`EinsteinSum`. Expressions that are not wrapped will then "
+                   "not be summed.")
+            SymPyDeprecationWarning(
+                feature="The `contract` flag in code printing routines",
+                issue=9284, value=msg).warn()
+
         lhs = expr.lhs
         rhs = expr.rhs
         # We special case assignments that take multiple lines
@@ -343,8 +382,8 @@ class CodePrinter(StrPrinter):
                 code0 = self._print(temp)
                 lines.append(code0)
             return "\n".join(lines)
-        elif self._settings["contract"] and (lhs.has(IndexedBase) or
-                rhs.has(IndexedBase)):
+        elif (self._settings["contract"] and self._settings["loops"]
+              and (lhs.has(IndexedBase) or rhs.has(IndexedBase))):
             # Here we check if there is looping to be done, and if so
             # print the required loops.
             return self._doprint_loops(rhs, lhs)

@@ -5,13 +5,12 @@
 
     etc.
 
-    Methods in this module could be implemented by calling methods on Expr
-    objects instead.  When things stabilize this could be a useful
-    refactoring.
+    Deprecated. Use EinsteinSum from indexed_sums.
 """
 
 from __future__ import print_function, division
 
+from sympy.core.decorators import deprecated
 from sympy.core.function import Function
 from sympy.functions import exp, Piecewise
 from sympy.tensor.indexed import Idx, Indexed
@@ -174,6 +173,7 @@ def _get_indices_Add(expr):
     return non_scalars[0], symmetries
 
 
+@deprecated(useinstead='EinsteinSum', issue=9284)
 def get_indices(expr):
     """Determine the outer indices of expression ``expr``
 
@@ -269,6 +269,7 @@ def get_indices(expr):
             "FIXME: No specialized handling of type %s" % type(expr))
 
 
+@deprecated(useinstead='EinsteinSum', issue=9284)
 def get_contraction_structure(expr):
     """Determine dummy indices of ``expr`` and describe its structure
 

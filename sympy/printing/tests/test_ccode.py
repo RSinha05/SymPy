@@ -5,7 +5,7 @@ from sympy.functions import (Piecewise, sin, cos, Abs, exp, ceiling, sqrt,
 from sympy.utilities.pytest import raises
 from sympy.printing.ccode import CCodePrinter
 from sympy.utilities.lambdify import implemented_function
-from sympy.tensor import IndexedBase, Idx
+from sympy.tensor import IndexedBase, Idx, EinsteinSum
 from sympy.matrices import Matrix, MatrixSymbol
 
 from sympy import ccode
@@ -217,8 +217,15 @@ def test_ccode_Indexed_without_looking_for_contraction():
     Dy = IndexedBase('Dy', shape=(len_y-1,))
     i = Idx('i', len_y-1)
     e=Eq(Dy[i], (y[i+1]-y[i])/(x[i+1]-x[i]))
-    code0 = ccode(e.rhs, assign_to=e.lhs, contract=False)
-    assert code0 == 'Dy[i] = (y[%s] - y[i])/(x[%s] - x[i]);' % (i + 1, i + 1)
+    code0 = ccode(e.rhs, assign_to=e.lhs)
+    expected = ("for (int i=0; i<4; i++){\n"
+                "   Dy[i] = (y[i + 1] - y[i])/(x[i + 1] - x[i]);\n"
+                "}")
+    assert code0 == expected
+
+    code0 = ccode(e.rhs, assign_to=e.lhs, loops=False)
+    expected = ("Dy[i] = (y[i + 1] - y[i])/(x[i + 1] - x[i]);")
+    assert code0 == expected
 
 
 def test_ccode_loops_matrix_vector():
@@ -239,7 +246,7 @@ def test_ccode_loops_matrix_vector():
         '   }\n'
         '}'
     )
-    c = ccode(A[i, j]*x[j], assign_to=y[i])
+    c = ccode(EinsteinSum(A[i, j]*x[j]), assign_to=y[i])
     assert c == s
 
 
@@ -279,7 +286,7 @@ def test_ccode_loops_add():
         '   }\n'
         '}'
     )
-    c = ccode(A[i, j]*x[j] + x[i] + z[i], assign_to=y[i])
+    c = ccode(EinsteinSum(A[i, j]*x[j] + x[i] + z[i]), assign_to=y[i])
     assert c == s
 
 
@@ -309,7 +316,7 @@ def test_ccode_loops_multiple_contractions():
         '   }\n'
         '}'
     )
-    c = ccode(b[j, k, l]*a[i, j, k, l], assign_to=y[i])
+    c = ccode(EinsteinSum(b[j, k, l]*a[i, j, k, l]), assign_to=y[i])
     assert c == s
 
 
@@ -334,13 +341,23 @@ def test_ccode_loops_addfactor():
         '   for (int j=0; j<n; j++){\n'
         '      for (int k=0; k<o; k++){\n'
         '         for (int l=0; l<p; l++){\n'
-        '            y[i] = (a[%s] + b[%s])*c[%s] + y[i];\n' % (i*n*o*p + j*o*p + k*p + l, i*n*o*p + j*o*p + k*p + l, j*o*p + k*p + l) +\
+        '            y[i] = y[i] + c[%s]*a[%s];\n' % (j*o*p + k*p + l, i*n*o*p + j*o*p + k*p + l) +\
+        '         }\n'
+        '      }\n'
+        '   }\n'
+        '}\n'
+        'for (int i=0; i<m; i++){\n'
+        '   for (int j=0; j<n; j++){\n'
+        '      for (int k=0; k<o; k++){\n'
+        '         for (int l=0; l<p; l++){\n'
+        '            y[i] = y[i] + c[%s]*b[%s];\n' % (j*o*p + k*p + l, i*n*o*p + j*o*p + k*p + l) +\
         '         }\n'
         '      }\n'
         '   }\n'
         '}'
     )
-    c = ccode((a[i, j, k, l] + b[i, j, k, l])*c[j, k, l], assign_to=y[i])
+    ein_sum = EinsteinSum((a[i, j, k, l] + b[i, j, k, l])*c[j, k, l])
+    c = ccode(ein_sum, assign_to=y[i])
     assert c == s
 
 
@@ -384,8 +401,8 @@ def test_ccode_loops_multiple_terms():
         '   }\n'
         '}\n'
     )
-    c = ccode(
-        b[j]*a[i, j] + b[k]*a[i, k] + b[j]*b[k]*c[i, j, k], assign_to=y[i])
+    ein_sum = EinsteinSum(b[j]*a[i, j] + b[k]*a[i, k] + b[j]*b[k]*c[i, j, k])
+    c = ccode(ein_sum, assign_to=y[i])
     assert (c == s0 + s1 + s2 + s3[:-1] or
             c == s0 + s1 + s3 + s2[:-1] or
             c == s0 + s2 + s1 + s3[:-1] or

@@ -58,7 +58,8 @@ class FCodePrinter(CodePrinter):
         'user_functions': {},
         'human': True,
         'source_format': 'fixed',
-        'contract': True,
+        'contract': 'auto',
+        'loops': True,
         'standard': 77
     }
 
@@ -426,12 +427,16 @@ def fcode(expr, assign_to=None, **settings):
         declarations for the number symbols. If False, the same information is
         returned in a tuple of (symbols_to_declare, not_supported_functions,
         code_text). [default=True].
-    contract: bool, optional
-        If True, ``Indexed`` instances are assumed to obey tensor contraction
-        rules and the corresponding nested loops over indices are generated.
-        Setting contract=False will not generate loops, instead the user is
-        responsible to provide values for the indices in the code.
-        [default=True].
+    contract: bool or 'auto', optional
+        Deprecated; use ``EinsteinSum`` instead.  If True, ``Indexed`` instances
+        are assumed to obey tensor contraction rules and the corresponding
+        nested loops over indices are generated. Setting contract=False implies
+        loops=False (see below). [default='auto']
+    loops: bool, optional
+        If True, loops are automatically generated for assignments to
+        ``Indexed`` instances. If False, loops are not generated; instead the
+        user is responsible for providing values for the indices in the code.
+        [default=True]
     source_format : optional
         The source format can be either 'fixed' or 'free'. [default='fixed']
     standard : integer, optional
@@ -480,20 +485,23 @@ def fcode(expr, assign_to=None, **settings):
              tau = x
           end if
 
-    Support for loops is provided through ``Indexed`` types. With
-    ``contract=True`` these expressions will be turned into loops, whereas
-    ``contract=False`` will just print the assignment expression that should be
-    looped over:
+    Support for loops is provided through ``Indexed`` types; automatic summation
+    of repeated indices occurs when expressions are wrapped in ``EinsteinSum``.
 
     >>> from sympy import Eq, IndexedBase, Idx
+    >>> from __future__ import print_function
     >>> len_y = 5
     >>> y = IndexedBase('y', shape=(len_y,))
     >>> t = IndexedBase('t', shape=(len_y,))
     >>> Dy = IndexedBase('Dy', shape=(len_y-1,))
     >>> i = Idx('i', len_y-1)
     >>> e=Eq(Dy[i], (y[i+1]-y[i])/(t[i+1]-t[i]))
-    >>> fcode(e.rhs, assign_to=e.lhs, contract=False)
-    '      Dy(i) = (y(i + 1) - y(i))/(t(i + 1) - t(i))'
+    >>> print(fcode(e.rhs, assign_to=e.lhs))
+    do i = 1, 4
+     Dy(i) = (y(i + 1) - y(i))/(t(i + 1) - t(i))
+    end do
+    >>> print(fcode(e.rhs, assign_to=e.lhs, loops=False))
+    Dy(i) = (y(i + 1) - y(i))/(t(i + 1) - t(i))
 
     Matrices are also supported, but a ``MatrixSymbol`` of the same dimensions
     must be provided to ``assign_to``. Note that any expression that can be
