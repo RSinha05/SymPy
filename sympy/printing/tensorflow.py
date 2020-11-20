@@ -10,6 +10,7 @@ import sympy
 
 tensorflow = import_module('tensorflow')
 
+
 class TensorflowPrinter(AbstractPythonCodePrinter):
     """
     Tensorflow printer which handles vectorized piecewise functions,
@@ -208,13 +209,6 @@ class TensorflowPrinter(AbstractPythonCodePrinter):
         for subexpr in expr.args:
             ret.append(self._print(subexpr))
         return "\n".join(ret)
-
-    def _get_letter_generator_for_einsum(self):
-        for i in range(97, 123):
-            yield chr(i)
-        for i in range(65, 91):
-            yield chr(i)
-        raise ValueError("out of letters")
 
     def _print_CodegenArrayTensorProduct(self, expr):
         letters = self._get_letter_generator_for_einsum()

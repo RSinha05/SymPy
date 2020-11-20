@@ -9,9 +9,10 @@ from sympy.codegen.array_utils import (CodegenArrayContraction,
 from sympy import MatrixSymbol, Sum
 from sympy.combinatorics import Permutation
 from sympy.functions.special.tensor_functions import KroneckerDelta
-from sympy.matrices.expressions.diagonal import DiagMatrix
 from sympy.matrices import Trace, MatAdd, MatMul, Transpose
-from sympy.testing.pytest import raises
+from sympy.utilities.pytest import raises
+from sympy.tensor.array import permutedims, tensorproduct, tensorcontraction
+from sympy.matrices.expressions.diagonal import DiagMatrix
 
 
 A, B = symbols("A B", cls=IndexedBase)
@@ -48,6 +49,7 @@ def test_codegen_array_contraction_construction():
     cg = parse_indexed_expression(elem)
     cg = cg.sort_args_by_name()
     assert cg == result
+
 
 def test_codegen_array_contraction_indices_types():
     cg = CodegenArrayContraction(CodegenArrayTensorProduct(M, N), (0, 1))
@@ -374,6 +376,30 @@ def test_special_matrices():
     assert recognize_matrix_expression(cg) == a.T*b
 
 
+def test_codegen_array_doit():
+    M = MatrixSymbol("M", 2, 2)
+    N = MatrixSymbol("N", 2, 2)
+    P = MatrixSymbol("P", 2, 2)
+    Q = MatrixSymbol("Q", 2, 2)
+
+    M = M.as_explicit()
+    N = N.as_explicit()
+    P = P.as_explicit()
+    Q = Q.as_explicit()
+
+    expr = CodegenArrayTensorProduct(M, N, P, Q)
+    assert expr.doit() == tensorproduct(M, N, P, Q)
+    expr2 = CodegenArrayContraction(expr, (0, 1))
+    assert expr2.doit() == tensorcontraction(tensorproduct(M, N, P, Q), (0, 1))
+    expr2 = CodegenArrayDiagonal(expr, (0, 1))
+    #assert expr2 = ... # TODO: not implemented
+    expr = CodegenArrayTensorProduct(M, N)
+    exprp = CodegenArrayPermuteDims(expr, [2, 1, 3, 0])
+    assert exprp.doit() == permutedims(tensorproduct(M, N), [2, 1, 3, 0])
+    expr = CodegenArrayElementwiseAdd(M, N)
+    assert expr.doit() == M + N
+
+
 def test_push_indices_up_and_down():
 
     indices = list(range(10))
@@ -498,7 +524,7 @@ def test_recognize_diagonalized_vectors():
     cg = CodegenArrayContraction(CodegenArrayTensorProduct(A.T, a, b, b.T, (A*X*b).applyfunc(cos)), (1, 2, 8), (5, 6, 9))
     assert cg.split_multiple_contractions().dummy_eq(CodegenArrayContraction(
         CodegenArrayTensorProduct(A.T, DiagMatrix(a), b, b.T, (A*X*b).applyfunc(cos)),
-                               (1, 2), (3, 8), (5, 6, 9)))
+                                 (1, 2), (3, 8), (5, 6, 9)))
     # assert recognize_matrix_expression(cg)
 
     # Check no overlap of lines:

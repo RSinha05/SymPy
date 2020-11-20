@@ -18,14 +18,17 @@ from sympy.utilities.decorator import doctest_depends_on
 
 __doctest_requires__ = {('lambdify',): ['numpy', 'tensorflow']}
 
+
 # Default namespaces, letting us define translations that can't be defined
 # by simple variable maps, like I => 1j
+
 MATH_DEFAULT = {}  # type: Dict[str, Any]
 MPMATH_DEFAULT = {}  # type: Dict[str, Any]
 NUMPY_DEFAULT = {"I": 1j}  # type: Dict[str, Any]
 SCIPY_DEFAULT = {"I": 1j}  # type: Dict[str, Any]
 TENSORFLOW_DEFAULT = {}  # type: Dict[str, Any]
 SYMPY_DEFAULT = {}  # type: Dict[str, Any]
+TORCH_DEFAULT = {}  # type: Dict[str, Any]
 NUMEXPR_DEFAULT = {}  # type: Dict[str, Any]
 
 # These are the namespaces the lambda functions will use.
@@ -37,6 +40,7 @@ MPMATH = MPMATH_DEFAULT.copy()
 NUMPY = NUMPY_DEFAULT.copy()
 SCIPY = SCIPY_DEFAULT.copy()
 TENSORFLOW = TENSORFLOW_DEFAULT.copy()
+TORCH = TORCH_DEFAULT.copy()
 SYMPY = SYMPY_DEFAULT.copy()
 NUMEXPR = NUMEXPR_DEFAULT.copy()
 
@@ -84,7 +88,9 @@ SCIPY_TRANSLATIONS = {}  # type: Dict[str, str]
 
 TENSORFLOW_TRANSLATIONS = {}  # type: Dict[str, str]
 
+TORCH_TRANSLATIONS = {}  # type: Dict[str, str]
 NUMEXPR_TRANSLATIONS = {}  # type: Dict[str, str]
+
 
 # Available modules:
 MODULES = {
@@ -93,11 +99,13 @@ MODULES = {
     "numpy": (NUMPY, NUMPY_DEFAULT, NUMPY_TRANSLATIONS, ("import numpy; from numpy import *; from numpy.linalg import *",)),
     "scipy": (SCIPY, SCIPY_DEFAULT, SCIPY_TRANSLATIONS, ("import numpy; import scipy; from scipy import *; from scipy.special import *",)),
     "tensorflow": (TENSORFLOW, TENSORFLOW_DEFAULT, TENSORFLOW_TRANSLATIONS, ("import tensorflow",)),
+    "torch": (TORCH, TORCH_DEFAULT, TORCH_TRANSLATIONS, ("import torch",)),
+
     "sympy": (SYMPY, SYMPY_DEFAULT, {}, (
         "from sympy.functions import *",
         "from sympy.matrices import *",
         "from sympy import Integral, pi, oo, nan, zoo, E, I",)),
-    "numexpr" : (NUMEXPR, NUMEXPR_DEFAULT, NUMEXPR_TRANSLATIONS,
+    "numexpr": (NUMEXPR, NUMEXPR_DEFAULT, NUMEXPR_TRANSLATIONS,
                  ("import_module('numexpr')", )),
 }
 
@@ -792,6 +800,8 @@ def lambdify(args: Iterable, expr, modules=None, printer=None, use_imps=True,
             from sympy.printing.tensorflow import TensorflowPrinter as Printer # type: ignore
         elif _module_present('sympy', namespaces):
             from sympy.printing.pycode import SymPyPrinter as Printer # type: ignore
+        elif _module_present('torch', namespaces):
+            from sympy.printing.torch import TorchPrinter as Printer # type: ignore
         else:
             from sympy.printing.pycode import PythonCodePrinter as Printer # type: ignore
         user_functions = {}
