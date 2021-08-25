@@ -9,7 +9,7 @@ Todo:
 
 import math
 
-from sympy import Integer, log, Mul, Add, Pow, conjugate
+from sympy import Integer, log, Mul, Add, Pow, sqrt, symbols
 from sympy.core.basic import sympify
 from sympy.core.compatibility import SYMPY_INTS
 from sympy.matrices import Matrix, zeros
@@ -564,21 +564,42 @@ def measure_all(qubit, format='sympy', normalize=True):
         >>> measure_all(q)
         [(|00>, 1/4), (|01>, 1/4), (|10>, 1/4), (|11>, 1/4)]
     """
-    m = qubit_to_matrix(qubit, format)
-
     if format == 'sympy':
+        qubit = '{}'.format(qubit)
+        state = []
         results = []
-
-        if normalize:
-            m = m.normalized()
-
-        size = max(m.shape)  # Max of shape to account for bra or ket
-        nqubits = int(math.log(size)/math.log(2))
-        for i in range(size):
-            if m[i] != 0.0:
-                results.append(
-                    (Qubit(IntQubit(i, nqubits=nqubits)), m[i]*conjugate(m[i]))
-                )
+        while('|'in qubit or '>' in qubit or 'I' in qubit):
+            if ('|'in qubit or '>' in qubit):
+                start = qubit.find('|')
+                end = qubit.find('>')
+                newstring = '1'
+                state.append(Qubit(qubit[start+1:end]))
+                qubit = qubit[:start] + newstring + qubit[end+1:]
+            else:
+                starti = qubit.find('I')
+                newstringi = '{}(-1)'.format(sqrt)
+                qubit = qubit[:starti] + newstringi + qubit[starti+1:]
+        qubit = qubit.split()
+        while('-'in qubit or '+' in qubit):
+            if('-' in qubit):
+                qubit.remove('-')
+            else:
+                qubit.remove('+')
+        norm = 1
+        if normalize==True:
+            norm = 0
+            for i in range(len(state)):
+                norm = norm+eval(qubit[i])*eval(qubit[i]).conjugate()
+        if norm!=1:
+            for i in range(len(state)):
+                results.append((state[i],sympify('{}'.format((eval(qubit[i])*(eval(qubit[i]).conjugate())*(1/norm))),rational=True)))
+        else:
+            try:
+                for i in range(len(state)):
+                    results.append((state[i],sympify('{}'.format(eval(qubit[i])*eval(qubit[i]).conjugate()),rational=True)))
+            except NameError:
+                for i in range(len(state)):
+                    results.append((state[i],sympify('{}'.format(symbols(qubit[i])*symbols(qubit[i]).conjugate()),rational=True)))
         return results
     else:
         raise NotImplementedError(
@@ -784,20 +805,18 @@ def measure_all_oneshot(qubit, format='sympy'):
     result : Qubit
         The qubit that the system collapsed to upon measurement.
     """
-    import random
-    m = qubit_to_matrix(qubit)
-
     if format == 'sympy':
-        m = m.normalized()
-        random_number = random.random()
-        total = 0
-        result = 0
-        for i in m:
-            total += i*i.conjugate()
-            if total > random_number:
-                break
-            result += 1
-        return Qubit(IntQubit(result, int(math.log(max(m.shape), 2) + .1)))
+        import random
+        qubit = str(qubit)
+        state = []
+        while('|'in qubit or '>' in qubit):
+            start = qubit.find('|')
+            end = qubit.find('>')
+            newstring = '1'
+            state.append(Qubit(qubit[start:end+1]))
+            qubit = qubit[:start] + newstring + qubit[end+1:]
+        random_number = random.randrange(len(state))
+        return state[random_number]
     else:
         raise NotImplementedError(
             "This function can't handle non-sympy matrix formats yet"
