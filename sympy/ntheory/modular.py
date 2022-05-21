@@ -1,7 +1,7 @@
 from functools import reduce
 
 from sympy.core.mul import prod
-from sympy.core.numbers import igcdex, igcd
+from sympy.core.numbers import igcdex, igcd, mod_inverse
 from sympy.ntheory.primetest import isprime
 from sympy.polys.domains import ZZ
 from sympy.polys.galoistools import gf_crt, gf_crt1, gf_crt2
@@ -25,18 +25,31 @@ def symmetric_residue(a, m):
 def crt(m, v, symmetric=False, check=True):
     r"""Chinese Remainder Theorem.
 
-    The moduli in m are assumed to be pairwise coprime.  The output
+    The moduli in m are assumed to be pairwise co-prime.  The output
     is then an integer f, such that f = v_i mod m_i for each pair out
     of v and m. If ``symmetric`` is False a positive integer will be
     returned, else \|f\| will be less than or equal to the LCM of the
     moduli, and thus f may be negative.
 
-    If the moduli are not co-prime the correct result will be returned
-    if/when the test of the result is found to be incorrect. This result
-    will be None if there is no solution.
-
     The keyword ``check`` can be set to False if it is known that the moduli
-    are coprime.
+    are co-prime. If it is set to False but the moduli are not co-prime
+    then the wrong result will be obtained.
+
+    Parameters
+    ==========
+
+    m: 1D list
+        List of moduli.
+    v: 1D list
+        List of remainders.
+    symmetric: bool, optional
+        If true, then the output will be within half of the modulus,
+        otherwise returns the output as it is if false. Default value
+        is False.
+    check: bool, optional
+        If true, the function checks if all the moduli are co-prime or
+        not and raises a ValueError exception if they aren't. If false,
+        then there is no checking involved. Default value is True.
 
     Examples
     ========
@@ -54,17 +67,21 @@ def crt(m, v, symmetric=False, check=True):
        >>> [639985 % m for m in [99, 97, 95]]
        [49, 76, 65]
 
-    If the moduli are not co-prime, you may receive an incorrect result
-    if you use ``check=False``:
+    If the moduli are not co-prime, you will receive a ValueError.
 
-       >>> crt([12, 6, 17], [3, 4, 2], check=False)
-       (954, 1224)
-       >>> [954 % m for m in [12, 6, 17]]
-       [6, 0, 2]
-       >>> crt([12, 6, 17], [3, 4, 2]) is None
-       True
-       >>> crt([3, 6], [2, 5])
-       (5, 6)
+       >>> crt([12, 6, 17], [3, 4, 2])
+       Traceback (most recent call last):
+       ...
+       ValueError: All the moduli should be co-prime with one another
+
+    If you are sure the moduli are co-prime then it is safe to set
+    ``check=False``. But if the moduli are actually not co-prime
+    then the wrong result will be obtained:
+
+        >>> crt([12, 6, 17], [3, 4, 2], check=False)
+        (954, 1224)
+        >>> [954 % m for m in [12, 6, 17]]
+        [6, 0, 2]
 
     Note: the order of gf_crt's arguments is reversed relative to crt,
     and that solve_congruence takes residue, modulus pairs.
@@ -92,7 +109,8 @@ def crt(m, v, symmetric=False, check=True):
             result = solve_congruence(*list(zip(v, m)),
                     check=False, symmetric=symmetric)
             if result is None:
-                return result
+                raise ValueError(
+                    "All the moduli should be co-prime with one another")
             result, mm = result
 
     if symmetric:
@@ -253,3 +271,47 @@ def solve_congruence(*remainder_modulus_pairs, **hint):
         if symmetric:
             return symmetric_residue(n, m), m
         return n, m
+
+
+def crt_cartesian(rem, mod):
+    """
+    Return a list of values whose elements give the remainders
+    in the Cartesian product of the supplied remainders when divided
+    by each of the supplied moduli. If the moduli are not co-prime,
+    you will receive a ValueError.
+
+    Parameters
+    ==========
+
+    rem: 2D list
+        List of lists, each containing the remainders with respect
+        to each modulus.
+    mod: 1D list
+        List of moduli.
+
+    Examples
+    ========
+
+    >>> from sympy.ntheory.modular import crt_cartesian
+    >>> from sympy.utilities.iterables import cartes
+
+    >>> rem = [[1, 3], [2, 4]]
+    >>> crt_cartesian(rem, [5, 7])
+    [16, 11, 23, 18]
+
+    >>> [(p%5, p%7) for p in _]
+    [(1, 2), (1, 4), (3, 2), (3, 4)]
+
+    """
+    if len(mod) == 0:
+        raise ValueError("There must be at least 1 modulus.")
+    if len(mod) != len(rem) or not all(rem):
+        raise ValueError(
+            "There should be a list of remainders for each modulus.")
+    m = mod[0]
+    R = rem[0]
+    for i in range(1, len(mod)):
+        mi = mod_inverse(m, mod[i])*m  # fails if `mod` not pairwise-prime
+        m *= mod[i]
+        R = [(r + mi*(ri - r)) % m for r in R for ri in rem[i]]
+    return R
