@@ -30,6 +30,7 @@ SCIPY_DEFAULT = {"I": 1j}  # type: tDict[str, Any]
 CUPY_DEFAULT = {"I": 1j}  # type: tDict[str, Any]
 JAX_DEFAULT = {"I": 1j}  # type: tDict[str, Any]
 TENSORFLOW_DEFAULT = {}  # type: tDict[str, Any]
+TORCH_DEFAULT = {}  # type: tDict[str, Any]
 SYMPY_DEFAULT = {}  # type: tDict[str, Any]
 NUMEXPR_DEFAULT = {}  # type: tDict[str, Any]
 
@@ -44,6 +45,7 @@ SCIPY = SCIPY_DEFAULT.copy()
 CUPY = CUPY_DEFAULT.copy()
 JAX = JAX_DEFAULT.copy()
 TENSORFLOW = TENSORFLOW_DEFAULT.copy()
+TORCH = TORCH_DEFAULT.copy()
 SYMPY = SYMPY_DEFAULT.copy()
 NUMEXPR = NUMEXPR_DEFAULT.copy()
 
@@ -95,6 +97,7 @@ CUPY_TRANSLATIONS = {}  # type: tDict[str, str]
 JAX_TRANSLATIONS = {}  # type: tDict[str, str]
 
 TENSORFLOW_TRANSLATIONS = {}  # type: tDict[str, str]
+TORCH_TRANSLATIONS = {}  # type: tDict[str, str]
 
 NUMEXPR_TRANSLATIONS = {}  # type: tDict[str, str]
 
@@ -107,6 +110,7 @@ MODULES = {
     "cupy": (CUPY, CUPY_DEFAULT, CUPY_TRANSLATIONS, ("import cupy",)),
     "jax": (JAX, JAX_DEFAULT, JAX_TRANSLATIONS, ("import jax",)),
     "tensorflow": (TENSORFLOW, TENSORFLOW_DEFAULT, TENSORFLOW_TRANSLATIONS, ("import tensorflow",)),
+    "torch": (TORCH, TORCH_DEFAULT, TORCH_TRANSLATIONS, ("import torch",)),
     "sympy": (SYMPY, SYMPY_DEFAULT, {}, (
         "from sympy.functions import *",
         "from sympy.matrices import *",
@@ -803,6 +807,8 @@ def lambdify(args, expr, modules=None, printer=None, use_imps=True,
             from sympy.printing.lambdarepr import NumExprPrinter as Printer # type: ignore
         elif _module_present('tensorflow', namespaces):
             from sympy.printing.tensorflow import TensorflowPrinter as Printer # type: ignore
+        elif _module_present('torch', namespaces):
+            from sympy.printing.torch import TorchPrinter as Printer # type: ignore
         elif _module_present('sympy', namespaces):
             from sympy.printing.pycode import SymPyPrinter as Printer # type: ignore
         else:
