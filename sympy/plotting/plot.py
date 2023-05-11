@@ -134,6 +134,10 @@ class Plot:
     - margin : float in [0, 1]
     - backend : {'default', 'matplotlib', 'text'} or a subclass of BaseBackend
     - size : optional tuple of two floats, (width, height); default: None
+    - special_points : list of tuples of either two or three floats
+        Special points are only considered for ``MatplotlibBackend`` at the
+        moment. Special points must also describe points in all axes available,
+        depending on whether the plot is 3D or 2D.
 
     The per data series options and aesthetics are:
     There are none in the base series. See below for options for subclasses.
@@ -180,7 +184,7 @@ class Plot:
         xlim=None, ylim=None, axis_center='auto', axis=True,
         xscale='linear', yscale='linear', legend=False, autoscale=True,
         margin=0, annotations=None, markers=None, rectangles=None,
-        fill=None, backend='default', size=None, **kwargs):
+        fill=None, backend='default', size=None, special_points=None, **kwargs):
         super().__init__()
 
         # Options for the graph as a whole.
@@ -202,6 +206,7 @@ class Plot:
         self.markers = markers
         self.rectangles = rectangles
         self.fill = fill
+        self.special_points = special_points
 
         # Contains the data objects to be plotted. The backend should be smart
         # enough to iterate over this list.
@@ -241,7 +246,6 @@ class Plot:
         check_and_set("ylim", ylim)
         self.size = None
         check_and_set("size", size)
-
 
     def show(self):
         # TODO move this to the backend (also for save)
@@ -1341,7 +1345,6 @@ class MatplotlibBackend(BaseBackend):
 
         self.ax = []
         self.fig = self.plt.figure(figsize=parent.size)
-
         for i, series in enumerate(series_list):
             are_3D = [s.is_3D for s in series]
 
@@ -1362,7 +1365,6 @@ class MatplotlibBackend(BaseBackend):
                 self.ax[i].spines['top'].set_color('none')
                 self.ax[i].xaxis.set_ticks_position('bottom')
                 self.ax[i].yaxis.set_ticks_position('left')
-
     @staticmethod
     def get_segments(x, y, z=None):
         """ Convert two list of coordinates to a list of segments to be used
@@ -1557,6 +1559,20 @@ class MatplotlibBackend(BaseBackend):
                 ax.add_patch(rect)
         if parent.fill:
             ax.fill_between(**parent.fill)
+        if parent.special_points:
+            xticks = ax.get_xticks()
+            yticks = ax.get_yticks()
+            if isinstance(ax, Axes3D): zticks = ax.get_zticks()
+            for point in parent.special_points:
+                xticks = np.append(xticks, point[0])
+                yticks = np.append(yticks, point[1])
+                if isinstance(ax, Axes3D):
+                    zticks = np.append(yticks, point[2])
+                    self.plt.plot(point[0], point[1], point[2], marker="o", markersize=5, markeredgecolor="blue", markerfacecolor="blue", zorder=10)
+                else: self.plt.plot(point[0], point[1], marker="o", markersize=5, markeredgecolor="blue", markerfacecolor="blue", zorder=10)
+            ax.set_xticks(xticks)
+            ax.set_yticks(yticks)
+            if isinstance(ax, Axes3D): ax.set_yticks(zticks)
 
         # xlim and ylim should always be set at last so that plot limits
         # doesn't get altered during the process.
@@ -1564,7 +1580,6 @@ class MatplotlibBackend(BaseBackend):
             ax.set_xlim(parent.xlim)
         if parent.ylim:
             ax.set_ylim(parent.ylim)
-
 
     def process_series(self):
         """
