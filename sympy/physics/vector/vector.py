@@ -91,7 +91,7 @@ class Vector(Printable, EvalfMixin):
         >>> q1 = symbols('q1')
         >>> N = ReferenceFrame('N')
         >>> dot(N.x, N.x)
-        1
+        1s
         >>> dot(N.x, N.y)
         0
         >>> A = N.orientnew('A', 'Axis', [q1, N.x])
