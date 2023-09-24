@@ -72,6 +72,12 @@ def test_besselk_leading_term():
     assert besselk(S(5)/3, x).as_leading_term(x) == 2**(S(2)/3)*gamma(S(5)/3)/x**(S(5)/3)
     assert besselk(S(2)/3, x).as_leading_term(x) == besselk(-S(2)/3, x).as_leading_term(x)
 
+    nz = Symbol("nz", nonzero=True)
+    assert besselk(nz, x).as_leading_term(x).subs({nz:S(5)/7}) == besselk(S(5)/7, x).series(x).as_leading_term(x)
+    assert besselk(nz, x).as_leading_term(x).subs({nz:S(-15)/7}) == besselk(S(-15)/7, x).series(x).as_leading_term(x)
+    assert besselk(nz, x).as_leading_term(x).subs({nz:3}) == besselk(3, x).series(x).as_leading_term(x)
+    assert besselk(nz, x).as_leading_term(x).subs({nz:-2}) == besselk(-2, x).series(x).as_leading_term(x)
+
 
 def test_besselj_series():
     assert besselj(0, x).series(x) == 1 - x**2/4 + x**4/64 + O(x**6)
