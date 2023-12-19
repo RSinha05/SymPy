@@ -242,6 +242,15 @@ class RepMatrix(MatrixBase):
     def _eval_todok(self):
         return self._rep.to_sympy().to_dok()
 
+    def _eval_todod(self):
+        return self._rep.to_sympy().to_dod()
+
+    @classmethod
+    def _eval_from_dod(cls, rows, cols, dod):
+        types = set().union(*[map(type, row.values()) for row in dod.values()])
+        rep = cls._dod_to_DomainMatrix(rows, cols, dod, types)
+        return cls._fromrep(rep)
+
     def _eval_values(self):
         return list(self.todok().values())
 
