@@ -47,6 +47,7 @@ from sympy.ntheory.factor_ import divisors
 from sympy.ntheory.residue_ntheory import discrete_log, nthroot_mod
 from sympy.polys import (roots, Poly, degree, together, PolynomialError,
                          RootOf, factor, lcm, gcd)
+from sympy.polys.domains import EX
 from sympy.polys.polyerrors import CoercionFailed
 from sympy.polys.polytools import invert, groebner, poly
 from sympy.polys.solvers import PolyNonlinearError
@@ -2985,9 +2986,9 @@ def linsolve(system, *symbols):
             '''))
 
     # Actually solve the equations:
-    Aaug = Matrix.hstack(A, b).to_DM()
+    Aaug = Matrix.hstack(A, b).to_DM(extension=True)
     if Aaug.domain.is_EXRAW:
-        Aaug = Aaug.convert_to('EX')
+        Aaug = Aaug.convert_to(EX)
     sol = _linsolve_aug(Aaug, symbols)
 
     if sol is None:
