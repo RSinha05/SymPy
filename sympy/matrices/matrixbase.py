@@ -238,7 +238,7 @@ class MatrixBase(Printable):
 
     def _eval_todod(self):
         rowsdict = {}
-        Mlol = M.tolist()
+        Mlol = self.tolist()
         for i, Mi in enumerate(Mlol):
             row = {j: Mij for j, Mij in enumerate(Mi) if Mij}
             if row:
@@ -730,7 +730,7 @@ class MatrixBase(Printable):
         todok
         from_dod
         """
-        return self._eval_todod()
+        return M._eval_todod()
 
     @classmethod
     def from_dod(cls, rows, cols, dod):
