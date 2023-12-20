@@ -2486,7 +2486,6 @@ class DomainMatrix:
         See Also
         ========
 
-        particular
         rref
         rref_den
         solve_den_general
