@@ -31,6 +31,9 @@ from sympy.external.gmpy import gmpy as _gmpy, flint as _flint
 from sympy.sets import FiniteSet, EmptySet
 from sympy.tensor.array.dense_ndim_array import ImmutableDenseNDimArray
 
+from sympy import ZZ, QQ, GF, RR, CC
+
+
 import mpmath
 from collections import defaultdict, OrderedDict
 
@@ -119,6 +122,48 @@ def test_sympify_flint():
 
         value = sympify(flint.fmpq(101, 127))
         assert value == Rational(101, 127) and type(value) is Rational
+
+        # Don't sympify elements of positive characteristic rings
+        val_nmod = flint.nmod(2, 7)
+        val_fmpz_mod = flint.fmpz_mod_ctx(7)(2)
+        raises(SympifyError, lambda: sympify(val_nmod))
+        raises(SympifyError, lambda: sympify(val_fmpz_mod))
+
+
+def test_sympify_numeric_tower_domains():
+    # Generally it is a mistake to mix domain elements with sympy expressions.
+    # It would be better if an error was raised whenever this happens. Those
+    # domains that resemble basic Python numeric types should be sympifiable
+    # because they fit in to Python's numeric tower though.
+    value = sympify(ZZ(2))
+    assert value == Integer(2) and type(value) is Integer
+
+    value = sympify(QQ(1, 3))
+    assert value == Rational(1, 3) and type(value) is Rational
+
+    value = sympify(RR(1.0))
+    assert value == Float(1.0) and type(value) is Float
+
+    value = sympify(CC(1.0 + 2.0j))
+    assert value == Float(1.0) + Float(2.0)*I and type(value) is Add
+
+
+def test_cant_sympify_domain_elements():
+    # Don't sympify most domain elements. Explicit conversions should be used
+    # instead. Mixing domain elements with sympy expressions usually indicates
+    # a bug somewhere (e.g. a missing conversion). These domain elements should
+    # instead be converted with R.to_sympy(obj) or similar methods.
+    x = Symbol('x')
+
+    no_sympify = [
+        GF(7)(3),
+        QQ.algebraic_field(sqrt(2)).from_sympy(sqrt(2)),
+        QQ[x].from_sympy(x),
+        QQ.frac_field(x)(1/x),
+    ]
+
+    for obj in no_sympify:
+        raises(SympifyError, lambda: sympify(obj))
 
 
 @conserve_mpmath_dps
