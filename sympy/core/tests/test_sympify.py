@@ -165,6 +165,25 @@ def test_cant_sympify_domain_elements():
     for obj in no_sympify:
         raises(SympifyError, lambda: sympify(obj))
 
+    # https://github.com/sympy/sympy/issues/26791
+    #
+    # These previously gave inconsistent values due to Integer sympifying the
+    # domain elements but not understanding the significance of the nonzero
+    # characteristic.
+    #
+    # For now these give False if the ground types are flint and True
+    # otherwise. Either the flint types would need to be changed to recognise
+    # Integer (using __index__) or ModularInteger would need to be changed to
+    # reject Integer.
+    if _flint is None:
+        assert (GF(11)(3) == Integer(-8)) is True
+        assert (Integer(-8) == GF(11)(3)) is True
+    #else:
+    #    This is commented out because a future version of Flint might change
+    #    the behaviour of the flint types.
+    #    assert (GF(11)(3) == Integer(-8)) is False
+    #    assert (Integer(-8) == GF(11)(3)) is False
+
 
 @conserve_mpmath_dps
 def test_sympify_mpmath():
