@@ -248,7 +248,7 @@ elif _SYMPY_GROUND_TYPES == 'flint':
     HAS_GMPY = 0
     GROUND_TYPES = 'flint'
     SYMPY_INTS = (int, flint.fmpz) # type: ignore
-    SYMPY_INTS_MOD = (flint.nmod, flint.fmpz_mod)
+    SYMPY_INTS_MOD = (flint.nmod, flint.fmpz_mod) # type: ignore
     MPZ = flint.fmpz # type: ignore
     MPQ = flint.fmpq # type: ignore
 
