@@ -31,7 +31,7 @@ from sympy.external.gmpy import gmpy as _gmpy, flint as _flint
 from sympy.sets import FiniteSet, EmptySet
 from sympy.tensor.array.dense_ndim_array import ImmutableDenseNDimArray
 
-from sympy import ZZ, QQ, GF, RR, CC
+from sympy import ZZ, QQ, GF, RR, CC, RealField, ComplexField
 
 
 import mpmath
@@ -140,6 +140,21 @@ def test_sympify_numeric_tower_domains():
 
     value = sympify(QQ(1, 3))
     assert value == Rational(1, 3) and type(value) is Rational
+
+    # XXX: Reset global precision. The fact that this is needed is because of
+    # a bug in RR and CC where creating a new instance with different
+    # precision changes the precision globally for all instances. Some other
+    # tests create instances of RR and CC with different precision, so this
+    # is needed if those tests are run before this one.
+    #
+    #  >>> CC.dtype(1).context.prec
+    #  53
+    #  >>> ComplexField(100)
+    #  CC
+    #  >>> CC.dtype(1).context.prec
+    #  100
+    RealField(53)
+    ComplexField(53)
 
     value = sympify(RR(1.0))
     assert value == Float(1.0) and type(value) is Float
