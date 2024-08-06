@@ -641,6 +641,15 @@ def test_lambertw():
     n = Symbol('n', negative=True)
     assert LambertW(n).is_zero is False
 
+    #test nseries
+    assert LambertW(x).series(x) == x - x**2 + 3*x**3/2 - 8*x**4/3 + 125*x**5/24 + O(x**6)
+    assert LambertW(exp(x)).series(x) == S(97)/24 + 151*x/8 + 2353*x**2/48 + 4111*x**3/48 + \
+        64297*x**4/576 + 111031*x**5/960 + O(x**6)
+
+    #test aseries
+    assert LambertW(x).aseries(x, n = 2) == -log(log(x))/log(x)**2 + log(log(x))/log(x) - \
+        log(log(x)) + log(x) + O(x**(-2), (x, oo))
+
 
 def test_issue_5673():
     e = LambertW(-1)

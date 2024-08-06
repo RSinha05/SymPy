@@ -1234,8 +1234,8 @@ class LambertW(Function):
     def _eval_as_leading_term(self, x, logx=None, cdir=0):
         if len(self.args) == 1:
             arg = self.args[0]
-            c, e = arg.as_coeff_exponent(x)
-            if e.is_positive:
+            _, e = arg.as_coeff_exponent(x)
+            if e.is_nonnegative:
                 arg0 = arg.subs(x, 0).cancel()
                 if not arg0.is_zero:
                     return self.func(arg0)
@@ -1247,10 +1247,10 @@ class LambertW(Function):
             from sympy.series.order import Order
             arg = self.args[0].nseries(x, n=n, logx=logx)
             lt = arg.as_leading_term(x, logx=logx)
-            lte = 1
+            lte = S.One
             if lt.is_Pow:
                 lte = lt.exp
-            if lte > 0:
+            if lte.is_positive:
                 if ceiling(n/lte) >= 1:
                     s = Add(*[(-S.One)**(k - 1)*Integer(k)**(k - 2)/
                               factorial(k - 1)*arg**k for k in range(1, ceiling(n/lte))])
