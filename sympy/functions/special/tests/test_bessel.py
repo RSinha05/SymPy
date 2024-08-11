@@ -625,6 +625,10 @@ def test_airyai():
         -sqrt(3)*(-1 + (z**5)**Rational(1, 3)/z**Rational(5, 3))*airybi(2*3**Rational(1, 3)*z**Rational(5, 3))/6 +
          (1 + (z**5)**Rational(1, 3)/z**Rational(5, 3))*airyai(2*3**Rational(1, 3)*z**Rational(5, 3))/2)
 
+    assert airyai(x).aseries(x) == sqrt(pi)*x**(S(1)/4)*(9*gamma(S(13)/6)*gamma(S(17)/6)/(64*pi**2*x**(S(7)/2)) + \
+        gamma(S(1)/6)*gamma(S(5)/6)/(2*pi**2*sqrt(x)) - 9*gamma(S(19)/6)*gamma(S(23)/6)/(256*pi**2*x**5) - \
+            3*gamma(S(7)/6)*gamma(S(11)/6)/(8*pi**2*x**2) + O(x**(-6), (x, oo)))*exp(-2*x**(S(3)/2)/3)/2
+
 
 def test_airybi():
     z = Symbol('z', real=False)
@@ -660,6 +664,10 @@ def test_airybi():
     assert expand_func(airybi(2*(3*z**5)**Rational(1, 3))) == (
         sqrt(3)*(1 - (z**5)**Rational(1, 3)/z**Rational(5, 3))*airyai(2*3**Rational(1, 3)*z**Rational(5, 3))/2 +
         (1 + (z**5)**Rational(1, 3)/z**Rational(5, 3))*airybi(2*3**Rational(1, 3)*z**Rational(5, 3))/2)
+
+    assert airybi(x).aseries(x) == sqrt(pi)*x**(S(1)/4)*(9*gamma(S(13)/6)*gamma(S(17)/6)/(64*pi**2*x**(S(7)/2)) + \
+        gamma(S(1)/6)*gamma(S(5)/6)/(2*pi**2*sqrt(x)) + 9*gamma(S(19)/6)*gamma(S(23)/6)/(256*pi**2*x**5) + \
+        3*gamma(S(7)/6)*gamma(S(11)/6)/(8*pi**2*x**2) + O(x**(-6), (x, oo)))*exp(2*x**(S(3)/2)/3)
 
 
 def test_airyaiprime():
