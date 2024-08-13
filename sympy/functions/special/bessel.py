@@ -1525,7 +1525,7 @@ class airyai(AiryBase):
         from sympy.series.order import Order
 
         point = args0[0]
-        if point is S.Infinity:
+        if point in [S.Infinity, S.NegativeInfinity]:
             z = self.args[0]
             l = [gamma(k + Rational(5, 6))*gamma(k + Rational(1, 6))*\
                  Rational(-3, 4)**k/(2*pi**2*factorial(k)* \
@@ -1718,7 +1718,7 @@ class airybi(AiryBase):
         from sympy.series.order import Order
 
         point = args0[0]
-        if point is S.Infinity:
+        if point in [S.Infinity, S.NegativeInfinity]:
             z = self.args[0]
             l = [gamma(k + Rational(5, 6))*gamma(k + Rational(1, 6))*\
                  Rational(3, 4)**k/(2*pi**2*factorial(k)*\
