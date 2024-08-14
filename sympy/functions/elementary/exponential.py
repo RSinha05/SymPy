@@ -1251,7 +1251,7 @@ class LambertW(Function):
             if lt.is_Pow:
                 lte = lt.exp
             if lte.is_positive:
-                if ceiling(n/lte) >= 1:
+                if (ceiling(n / lte) >= 1) is S.true:
                     s = Add(*[(-S.One)**(k - 1)*Integer(k)**(k - 2)/
                               factorial(k - 1)*arg**k for k in range(1, ceiling(n/lte))])
                     s = expand_multinomial(s)
@@ -1275,7 +1275,7 @@ class LambertW(Function):
                     term = (-1/l1)**i
                     terms = []
                     for j in range(1, n):
-                        terms.append(stirling(i + j,i + 1)*(l2/l1)**j/factorial(j))
+                        terms.append(stirling(i + j, i + 1)*(l2/l1)**j/factorial(j))
                     term *= Add(*terms)
                     result += term
             result += Order(1/z**n, x)
