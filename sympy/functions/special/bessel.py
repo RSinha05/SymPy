@@ -1496,7 +1496,7 @@ class airyai(AiryBase):
         return pf1 * hyper([], [Rational(2, 3)], z**3/9) - pf2 * hyper([], [Rational(4, 3)], z**3/9)
 
     def _eval_rewrite_as_tractable(self, z, limitvar=None, **kwargs):
-        return sqrt(pi)*z**(1/4)*exp(-2*z**(3/2)/3)/2*_airyais(z)
+        return sqrt(pi)*z**Rational(1, 4)*exp(-Rational(2, 3)*z**Rational(3, 2))/2*_airyais(z)
 
     def _eval_expand_func(self, **hints):
         arg = self.args[0]
@@ -1689,7 +1689,7 @@ class airybi(AiryBase):
         return pf1 * hyper([], [Rational(2, 3)], z**3/9) + pf2 * hyper([], [Rational(4, 3)], z**3/9)
 
     def _eval_rewrite_as_tractable(self, z, limitvar=None, **kwargs):
-        return exp(Rational(2, 3)*z**Rational(3, 2))*sqrt(pi*sqrt(z))*_airybis(z)
+        return exp(Rational(2, 3)*z**Rational(3, 2))*sqrt(pi)*(z)**Rational(1, 4)*_airybis(z)
 
     def _eval_expand_func(self, **hints):
         arg = self.args[0]
@@ -2241,7 +2241,7 @@ class _airyais(Function):
         return 2*airyai(x)*exp(2*x**Rational(3, 2)/3)/sqrt(pi*sqrt(x))
 
     def _eval_nseries(self, x, n, logx, cdir=0):
-        x0 = self.args[0].limit(x, 0)
+        x0 = self.args[0].limit(x, 0, "-" if cdir<0 else "+")
         if x0.is_zero:
             f = self._eval_rewrite_as_intractable(*self.args)
             return f._eval_nseries(x, n, logx)
@@ -2273,7 +2273,7 @@ class _airybis(Function):
         return airybi(x)*exp(-2*x**Rational(3, 2)/3)/sqrt(pi*sqrt(x))
 
     def _eval_nseries(self, x, n, logx, cdir=0):
-        x0 = self.args[0].limit(x, 0)
+        x0 = self.args[0].limit(x, 0, "-" if cdir<0 else "+")
         if x0.is_zero:
             f = self._eval_rewrite_as_intractable(*self.args)
             return f._eval_nseries(x, n, logx)

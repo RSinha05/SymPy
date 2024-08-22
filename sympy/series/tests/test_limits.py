@@ -17,7 +17,7 @@ from sympy.functions.elementary.miscellaneous import (cbrt, real_root, sqrt)
 from sympy.functions.elementary.piecewise import Piecewise
 from sympy.functions.elementary.trigonometric import (acos, acot, acsc, asec, asin,
                                                       atan, cos, cot, csc, sec, sin, tan)
-from sympy.functions.special.bessel import (besseli, bessely, besselj, besselk, airybi)
+from sympy.functions.special.bessel import (besseli, bessely, besselj, besselk, airyai, airybi)
 from sympy.functions.special.error_functions import (Ei, erf, erfc, erfi, fresnelc, fresnels)
 from sympy.functions.special.gamma_functions import (digamma, gamma, uppergamma)
 from sympy.functions.special.hyper import meijerg
@@ -1427,4 +1427,5 @@ def test_issue_22982_15323():
 
 
 def test_issue_10804():
-    assert limit(airybi(x)*(x**(S(1)/4))*exp(-2*x**(S(3)/2)/3), x, oo)**2 == gamma(S(1)/6)**2*gamma(S(5)/6)**2/(4*pi**3)
+    assert limit(airybi(x)*x**(S(1)/4)*exp(-2*x**Rational(3, 2)/3), x, oo)**2 == gamma(S(1)/6)**2*gamma(S(5)/6)**2/(4*pi**3)
+    assert limit(2*airyai(x)*x**(S(1)/4)*exp(2*x**Rational(3, 2)/3), x, oo)**2 == gamma(S(1)/6)**2*gamma(S(5)/6)**2/(4*pi**3)
