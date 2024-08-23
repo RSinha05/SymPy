@@ -765,8 +765,8 @@ class besselk(BesselBase):
                 # Reference: https://functions.wolfram.com/Bessel-TypeFunctions/BesselK/06/01/04/01/01/0003/
                 # (only for non-integer order).
                 # While the expression in the reference above seems correct
-                # for general complex order [e.g. Dunster 1990. "Bessel functions of
-                # purely imaginary order, with an application to second-order
+                # for non-real order as well [e.g. Dunster 1990. "Bessel functions
+                # of purely imaginary order, with an application to second-order
                 # linear differential equations having a large parameter".
                 # SIAM J. Math. Anal. Vol 21, No. 4, pp 995-1018.], the
                 # implementation here assumes nu is real.
