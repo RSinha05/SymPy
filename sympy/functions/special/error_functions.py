@@ -1436,9 +1436,9 @@ class expint(Function):
 
     def _eval_as_leading_term(self, x, logx=None, cdir=0):
         nu, z = self.args
-        if nu == 1:
-            arg = -log(z) - EulerGamma
-        if nu.is_real and nu > 1:
+        if nu == S.One:
+            return (-log(z) - EulerGamma).as_leading_term(x, logx=logx)
+        if nu.is_real and (nu > 1) is S.true:
             arg = 1/(nu - 1)
             return arg.as_leading_term(x, logx=logx)
         return super()._eval_as_leading_term(x, logx, cdir)
