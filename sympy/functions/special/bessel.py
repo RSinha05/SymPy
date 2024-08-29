@@ -2241,7 +2241,7 @@ class _airyais(Function):
         return 2*airyai(x)*exp(2*x**Rational(3, 2)/3)/sqrt(pi*sqrt(x))
 
     def _eval_nseries(self, x, n, logx, cdir=0):
-        x0 = self.args[0].limit(x, 0, "-" if cdir<0 else "+")
+        x0 = self.args[0].limit(x, 0, "-" if cdir == -1 else "+")
         if x0.is_zero:
             f = self._eval_rewrite_as_intractable(*self.args)
             return f._eval_nseries(x, n, logx)
@@ -2273,7 +2273,7 @@ class _airybis(Function):
         return airybi(x)*exp(-2*x**Rational(3, 2)/3)/sqrt(pi*sqrt(x))
 
     def _eval_nseries(self, x, n, logx, cdir=0):
-        x0 = self.args[0].limit(x, 0, "-" if cdir<0 else "+")
+        x0 = self.args[0].limit(x, 0, "-" if cdir == -1 else "+")
         if x0.is_zero:
             f = self._eval_rewrite_as_intractable(*self.args)
             return f._eval_nseries(x, n, logx)
